@@ -1,0 +1,1646 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마실수다 (MASILSUDA) - 시니어 소셜 플랫폼 프로토타입</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        /* 90% 화이트 & 라이트 그레이 바탕 + 10% 핵심 버튼 포인트 플랫 UI */
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #EEF0F3;
+            color: #1F2937;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* 큰 글씨 모드 활성화 시 전체 글씨 비율 확대 */
+        .large-text-mode {
+            font-size: 1.15rem;
+        }
+        .large-text-mode .text-xs { font-size: 0.96rem !important; }
+        .large-text-mode .text-sm { font-size: 1.08rem !important; }
+        .large-text-mode .text-base { font-size: 1.22rem !important; }
+        .large-text-mode .text-lg { font-size: 1.38rem !important; }
+        .large-text-mode .text-xl { font-size: 1.54rem !important; }
+        .large-text-mode .text-2xl { font-size: 1.75rem !important; }
+
+        /* 스크롤바 숨김 */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* 부드러운 전환 애니메이션 */
+        .fade-in {
+            animation: fadeIn 0.16s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(3px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="flex justify-center items-center min-h-screen p-0 sm:p-4">
+
+    <!-- 모바일 앱 프레임 (화이트 & 라이트 그레이 캔버스) -->
+    <div id="app-frame" class="relative w-full max-w-[420px] h-[100dvh] sm:h-[840px] bg-[#F7F8FA] sm:rounded-[34px] sm:shadow-xl sm:border-[8px] sm:border-[#2C313A] flex flex-col overflow-hidden">
+
+        <!-- 상단 상태바 (순백색 배경) -->
+        <div class="bg-[#FFFFFF] px-5 pt-2.5 pb-1.5 flex justify-between items-center text-xs font-bold text-[#6B7280] border-b border-[#E5E7EB] select-none shrink-0">
+            <span>오후 5:07</span>
+            <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 bg-[#F7F8FA] text-[#4B5563] border border-[#E5E7EB] rounded text-[11px] font-bold">실명·안심인증</span>
+                <span class="tracking-tighter">LTE · 95%</span>
+            </div>
+        </div>
+
+        <!-- ==================== 메인 화면 컨텐츠 영역 ==================== -->
+        <main id="main-content" class="flex-1 overflow-y-auto no-scrollbar pb-28">
+            <!-- JavaScript로 탭별 렌더링 -->
+        </main>
+
+        <!-- ==================== 우측 하단 플로팅 버튼 (마실 탭 핵심 CTA 10% - 진한 브라운 #6D4C3D) ==================== -->
+        <button id="fab-create-btn" onclick="openCreateModal()" class="absolute bottom-24 right-4 z-20 bg-[#6D4C3D] hover:bg-[#583D31] active:scale-95 transition-transform text-white font-black text-lg px-5 py-3.5 rounded-full shadow-md flex items-center gap-2 border-2 border-[#FFFFFF]">
+            <span class="text-2xl leading-none">+</span>
+            <span>마실 만들기</span>
+        </button>
+
+        <!-- ==================== 하단 고정 탭바 (4개 2글자 탭: 마실 / 이웃 / 수다 / 내 정보) ==================== -->
+        <nav id="bottom-nav" class="bg-[#FFFFFF] border-t border-[#E5E7EB] px-2 py-2 flex justify-around items-center shrink-0 z-30">
+            <button onclick="switchTab('home')" id="nav-home" class="nav-btn flex-1 flex flex-col items-center justify-center py-1.5 rounded-xl text-[#6D4C3D] font-black bg-[#F5EFEA]">
+                <svg class="w-7 h-7 mb-0.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                <span class="text-sm">마실</span>
+            </button>
+            <button onclick="switchTab('neighbors')" id="nav-neighbors" class="nav-btn flex-1 flex flex-col items-center justify-center py-1.5 rounded-xl text-[#6B7280] font-bold">
+                <svg class="w-7 h-7 mb-0.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                <span class="text-sm">이웃</span>
+            </button>
+            <button onclick="switchTab('chat')" id="nav-chat" class="nav-btn relative flex-1 flex flex-col items-center justify-center py-1.5 rounded-xl text-[#6B7280] font-bold">
+                <span id="chat-badge" class="absolute top-1 right-5 bg-[#6D4C3D] text-white text-xs font-black px-1.5 py-0.2 rounded-full">2</span>
+                <svg class="w-7 h-7 mb-0.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                <span class="text-sm">수다</span>
+            </button>
+            <button onclick="switchTab('my')" id="nav-my" class="nav-btn flex-1 flex flex-col items-center justify-center py-1.5 rounded-xl text-[#6B7280] font-bold">
+                <svg class="w-7 h-7 mb-0.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                <span class="text-sm">내 정보</span>
+            </button>
+        </nav>
+
+        <!-- ==================== 모달 오버레이 ==================== -->
+        <div id="modal-overlay" class="hidden absolute inset-0 bg-black/50 z-40 flex flex-col justify-end sm:justify-center items-center p-0 sm:p-4">
+            <div id="modal-container" class="bg-[#FFFFFF] w-full max-w-[420px] max-h-[92%] rounded-t-3xl sm:rounded-3xl border border-[#E5E7EB] overflow-hidden flex flex-col shadow-xl fade-in">
+                <!-- 모달 내용 동적 주입 -->
+            </div>
+        </div>
+
+        <!-- ==================== 전체 화면 서브페이지 (마실 상세 / 수다방 내부) ==================== -->
+        <div id="subpage-container" class="hidden absolute inset-0 bg-[#F7F8FA] z-[35] flex flex-col overflow-hidden fade-in">
+            <!-- 서브페이지 내용 동적 주입 -->
+        </div>
+
+        <!-- ==================== 토스트 알림 메시지 박스 ==================== -->
+        <div id="toast-box" class="hidden absolute top-14 left-1/2 -translate-x-1/2 z-50 bg-[#1F2937] text-white px-5 py-3.5 rounded-2xl shadow-lg text-base font-bold text-center w-[90%] max-w-[360px]">
+            <span id="toast-text">알림 메시지</span>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 검증된 한국인·동양인 시니어 인물 사진 및 일상 풍경 에셋 ====================
+        const PHOTO_ASSETS = {
+            me: 'https://images.unsplash.com/photo-1584999734482-0361aecad844?auto=format&fit=crop&w=400&q=80',
+            woman1: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=400&q=80',
+            woman2: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=400&q=80',
+            woman3: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=400&q=80',
+            woman4: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80',
+            man1: 'https://images.unsplash.com/photo-1552058544-f2b08422138a?auto=format&fit=crop&w=400&q=80',
+            man2: 'https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?auto=format&fit=crop&w=400&q=80',
+            man3: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=400&q=80',
+
+            // 마실 및 일상 생활 사진
+            walk1: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=600&q=80',
+            tea1: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&w=600&q=80',
+            noodle1: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=600&q=80',
+            food1: 'https://images.unsplash.com/photo-1580651315530-69c8e0026377?auto=format&fit=crop&w=600&q=80',
+            flower1: 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=600&q=80',
+            pavilion1: 'https://images.unsplash.com/photo-1528164344705-47542687000d?auto=format&fit=crop&w=600&q=80',
+            golf1: 'https://images.unsplash.com/photo-1535131749006-b7f58c99034b?auto=format&fit=crop&w=600&q=80'
+        };
+
+        // 이미지 로드 실패 시 단색 라이트 그레이 한글 이름 첫 글자 폴백 아바타
+        function renderAvatarImg(src, altName, sizeClass = 'w-12 h-12', borderClass = 'border border-[#E5E7EB]') {
+            const initial = altName ? altName.charAt(0) : '이';
+            const fallbackUrl = `https://placehold.co/240x240/F3F4F6/374151?text=${encodeURIComponent(initial)}`;
+            return `<img src="${src}" alt="${altName}" onerror="this.onerror=null;this.src='${fallbackUrl}';" class="${sizeClass} rounded-full object-cover object-top ${borderClass} shrink-0 bg-[#F3F4F6]">`;
+        }
+
+        // ==================== 앱 상태 및 데이터 ====================
+        const state = {
+            currentTab: 'home',
+            selectedNeighborhood: '강북구 미아동',
+            neighborhoods: ['강북구 미아동', '강북구 수유동', '성북구 돈암동', '도봉구 창동'],
+            largeText: false,
+            searchOpen: false,
+            searchQuery: '',
+            selectedCategory: '전체',
+            neighborMode: 'friend', // 'friend' (편한 친구 찾기 - 그린) | 'romance' (설레는 인연 찾기 - 로즈 핑크)
+            neighborFilter: 'all',
+            neighborIndex: 0,
+            romanceAllowed: true,
+            chatFilter: 'group', // 'group' (함께하는 마실) | 'direct' (이웃과 수다)
+            activeChatId: null,
+            isNoticeExpanded: true
+        };
+
+        // 우리 동네 지난 마실 후기 데이터
+        const masilReviews = [
+            {
+                id: 'rev-1',
+                date: '지난주 일요일',
+                title: '단풍길 천천히 걷고 차 한잔',
+                photo: PHOTO_ASSETS.walk1,
+                comment: '“처음 뵈었는데도 옛친구처럼 편하게 걷고 차 마셨어요.”',
+                author: '강북구 미아동 · 4명 참여'
+            },
+            {
+                id: 'rev-2',
+                date: '3일 전',
+                title: '전통찻집 대추차 마실',
+                photo: PHOTO_ASSETS.tea1,
+                comment: '“따뜻한 대추차 한잔하며 건강 이야기 나누니 시간 가는 줄 몰랐습니다.”',
+                author: '강북구 수유동 · 3명 참여'
+            },
+            {
+                id: 'rev-3',
+                date: '지난주 수요일',
+                title: '따뜻한 손칼국수 점심 마실',
+                photo: PHOTO_ASSETS.noodle1,
+                comment: '“혼자 먹기 아쉬운 칼국수 함께 먹으니 밥맛이 꿀맛이었어요.”',
+                author: '강북구 수유동 · 4명 참여'
+            }
+        ];
+
+        // 마실 데이터 (홈 카드: 마실장 생략, '1자리 남음' 생략, 제목에 지역명 제거)
+        let masils = [
+            {
+                id: 1,
+                category: '산책·운동',
+                dateBadge: '내일 오후 2시',
+                fullDate: '내일(금) 오후 2시 00분',
+                maxSpots: 4,
+                currentSpots: 3,
+                photo: PHOTO_ASSETS.walk1,
+                title: '천천히 산책하고 따뜻한 차 한잔해요',
+                location: '북서울꿈의숲 서문 앞 (미아동)',
+                mapHint: '미아사거리역 1번 출구 마을버스 09번 승차 → 북서울꿈의숲 서문 하차 바로 앞 벤치',
+                cost: '각자 마실 차 값 (약 5,000원)',
+                targetDesc: '60~70대 이웃 누구나 (총 4명)',
+                hostName: '김정숙',
+                hostPhoto: PHOTO_ASSETS.woman1,
+                description: '처음 나오시는 분도 어색하지 않게 제가 먼저 반갑게 맞아드릴게요. 무리하게 빨리 걷지 않고, 숲길 천천히 걸으며 도란도란 수다 나누실 분들 환영합니다. 편한 운동화 신고 오세요!',
+                participants: [
+                    { name: '김정숙', isHost: true, age: '65세 · 여성', tag: '#산책좋아함', photo: PHOTO_ASSETS.woman1 },
+                    { name: '최병철', isHost: false, age: '68세 · 남성', tag: '#사진촬영', photo: PHOTO_ASSETS.man2 },
+                    { name: '이영자', isHost: false, age: '63세 · 여성', tag: '#전통차', photo: PHOTO_ASSETS.woman2 }
+                ],
+                joined: false
+            },
+            {
+                id: 2,
+                category: '식사·차',
+                dateBadge: '이번 주 토요일 낮 12시',
+                fullDate: '이번 주 토요일 낮 12시 00분',
+                maxSpots: 4,
+                currentSpots: 2,
+                photo: PHOTO_ASSETS.noodle1,
+                title: '따뜻한 손칼국수 한 그릇 같이 드실 분',
+                location: '수유역 3번 출구 인근 노포',
+                mapHint: '지하철 4호선 수유역 3번 출구 나오자마자 30m 앞 칼국수집 입구',
+                cost: '점심 식사비 각자 부담 (9,000원 내외)',
+                targetDesc: '60~70대 맛집 좋아하시는 분 (총 4명)',
+                hostName: '박철수',
+                hostPhoto: PHOTO_ASSETS.man1,
+                description: '혼자 식당 가기 적적할 때 마음 맞는 분들과 뜨끈한 손칼국수 한 그릇 함께하고 싶습니다. 식사 후에는 근처 찻집에서 가볍게 차 한잔 나누어요.',
+                participants: [
+                    { name: '박철수', isHost: true, age: '67세 · 남성', tag: '#한식맛집', photo: PHOTO_ASSETS.man1 },
+                    { name: '한순옥', isHost: false, age: '65세 · 여성', tag: '#동네산책', photo: PHOTO_ASSETS.woman3 }
+                ],
+                joined: false
+            },
+            {
+                id: 3,
+                category: '동네마실',
+                dateBadge: '다음 주 화요일 오후 3시',
+                fullDate: '다음 주 화요일 오후 3시 00분',
+                maxSpots: 4,
+                currentSpots: 3,
+                photo: PHOTO_ASSETS.pavilion1,
+                title: '가볍게 공원 돌고 시원한 식혜 한잔',
+                location: '오동근린공원 입구 정자',
+                mapHint: '오동근린공원 숲속도서관 옆 큰 나무 정자 앞',
+                cost: '각자 마실 음료 값 (약 4,000원)',
+                targetDesc: '60~70대 동네 이웃 누구나 (총 4명)',
+                hostName: '이영자',
+                hostPhoto: PHOTO_ASSETS.woman2,
+                description: '오후 햇살 좋을 때 공원 둘레길 한 바퀴 가볍게 돌고, 근처 찻집에서 시원한 식혜 한잔 마시며 살아가는 이야기 나누어요.',
+                participants: [
+                    { name: '이영자', isHost: true, age: '63세 · 여성', tag: '#공원산책', photo: PHOTO_ASSETS.woman2 },
+                    { name: '강대식', isHost: false, age: '70세 · 남성', tag: '#바둑장기', photo: PHOTO_ASSETS.man3 },
+                    { name: '윤옥분', isHost: false, age: '64세 · 여성', tag: '#전통차', photo: PHOTO_ASSETS.woman4 }
+                ],
+                joined: false
+            }
+        ];
+
+        // 이웃 프로필 데이터 ('편한 친구 찾기' / '설레는 인연 찾기')
+        const neighborList = [
+            {
+                id: 101,
+                type: 'friend',
+                name: '김정숙',
+                age: 65,
+                gender: '여성',
+                dong: '강북구 수유동',
+                isLocal: true,
+                photo: PHOTO_ASSETS.woman1,
+                intro: '오전에 북서울꿈의숲 자주 걷습니다. 같이 걸으면서 건강도 챙기고 웃음 나눌 편한 친구 구해요.',
+                commonTags: ['#둘레길산책', '#한식맛집'],
+                otherTags: ['#꽃가꾸기', '#전통차'],
+                verified: ['실명·연령 인증'],
+                dailyPhotos: [
+                    { url: PHOTO_ASSETS.walk1, caption: '아침 공원 둘레길 산책길' },
+                    { url: PHOTO_ASSETS.flower1, caption: '베란다에서 키운 화분 꽃' },
+                    { url: PHOTO_ASSETS.tea1, caption: '오후에 마시는 따뜻한 대추차' }
+                ]
+            },
+            {
+                id: 102,
+                type: 'friend',
+                name: '박철수',
+                age: 67,
+                gender: '남성',
+                dong: '성북구 돈암동',
+                isLocal: false,
+                photo: PHOTO_ASSETS.man1,
+                intro: '은퇴 후 사진 찍기와 맛집 탐방을 즐깁니다. 부담 없이 차 한잔하며 수다 나눌 동네 친구 반갑습니다.',
+                commonTags: ['#둘레길산책', '#한식맛집'],
+                otherTags: ['#풍경사진', '#국내여행'],
+                verified: ['실명·연령 인증'],
+                dailyPhotos: [
+                    { url: PHOTO_ASSETS.noodle1, caption: '단골집 따뜻한 손칼국수' },
+                    { url: PHOTO_ASSETS.pavilion1, caption: '주말 아침 공원 정자 풍경' },
+                    { url: PHOTO_ASSETS.food1, caption: '정갈한 한식 점심 한 상' }
+                ]
+            },
+            {
+                id: 201,
+                type: 'romance',
+                name: '이영자',
+                age: 63,
+                gender: '여성',
+                dong: '강북구 미아동',
+                isLocal: true,
+                photo: PHOTO_ASSETS.woman2,
+                intro: '아이들 다 출가시키고 제 인생의 다정한 동반자를 만나고 싶습니다. 함께 산책하고 여행 다닐 분을 기다립니다.',
+                commonTags: ['#둘레길산책', '#한식맛집'],
+                otherTags: ['#국내여행', '#음악감상'],
+                verified: ['실명·연령 인증', '싱글 인증'],
+                dailyPhotos: [
+                    { url: PHOTO_ASSETS.flower1, caption: '봄날 공원 나들이 꽃구경' },
+                    { url: PHOTO_ASSETS.tea1, caption: '여유로운 오후 전통찻집' },
+                    { url: PHOTO_ASSETS.walk1, caption: '북서울꿈의숲 산책로에서' }
+                ]
+            },
+            {
+                id: 202,
+                type: 'romance',
+                name: '강대식',
+                age: 68,
+                gender: '남성',
+                dong: '강북구 미아동',
+                isLocal: true,
+                photo: PHOTO_ASSETS.man3,
+                intro: '건강하고 성실하게 살아왔습니다. 남은 인생 서로 의지하며 맛있는 식사 한 끼 함께할 따뜻한 인연을 찾고 싶습니다.',
+                commonTags: ['#한식맛집', '#파크골프'],
+                otherTags: ['#등산', '#바둑'],
+                verified: ['실명·연령 인증', '싱글 인증'],
+                dailyPhotos: [
+                    { url: PHOTO_ASSETS.golf1, caption: '주말 아침 파크골프 라운딩' },
+                    { url: PHOTO_ASSETS.walk1, caption: '도봉산 자락 아침 산책' },
+                    { url: PHOTO_ASSETS.food1, caption: '건강 챙기는 보양식 식사' }
+                ]
+            }
+        ];
+
+        // 수다방 데이터 ('함께하는 마실' / '이웃과 수다')
+        let chatRooms = [
+            {
+                id: 'chat-1',
+                type: 'group',
+                badgeLabel: '내일 오후 2시',
+                relationType: null,
+                title: '천천히 산책하고 따뜻한 차 한잔해요',
+                memberCount: 3,
+                lastMsg: '내일 오후 2시에 서문 앞에서 뵙겠습니다~',
+                time: '오후 3:40',
+                unread: 2,
+                confirmed: false,
+                schedule: {
+                    date: '내일(금) 오후 2시 00분',
+                    place: '북서울꿈의숲 서문 앞 (미아동)',
+                    mapDetail: '미아사거리역 1번 출구 마을버스 09번 승차 → 북서울꿈의숲 서문 하차 바로 앞 벤치'
+                },
+                messages: [
+                    { sender: '김정숙 (마실장)', photo: PHOTO_ASSETS.woman1, text: '안녕하세요! 마실장 김정숙입니다. 반갑습니다.', time: '오전 10:15', isMe: false },
+                    { sender: '최병철', photo: PHOTO_ASSETS.man2, text: '반갑습니다! 내일 날씨가 맑다고 해서 기대되네요.', time: '오전 11:02', isMe: false },
+                    { sender: '김정숙 (마실장)', photo: PHOTO_ASSETS.woman1, text: '내일 오후 2시에 서문 앞에서 뵙겠습니다~ 편하게 오세요!', time: '오후 3:40', isMe: false }
+                ]
+            },
+            {
+                id: 'chat-3',
+                type: 'group',
+                badgeLabel: '이번 주 토요일 낮 12시',
+                relationType: null,
+                title: '따뜻한 손칼국수 한 그릇 같이 드실 분',
+                memberCount: 2,
+                lastMsg: '수유역 3번 출구 앞 칼국수집 입구에서 만나요.',
+                time: '어제',
+                unread: 0,
+                confirmed: true,
+                schedule: {
+                    date: '이번 주 토요일 낮 12시 00분',
+                    place: '수유역 3번 출구 인근 노포',
+                    mapDetail: '지하철 4호선 수유역 3번 출구 나오자마자 30m 앞 칼국수집 입구'
+                },
+                messages: [
+                    { sender: '박철수 (마실장)', photo: PHOTO_ASSETS.man1, text: '안녕하세요! 토요일 마실 함께할 박철수입니다.', time: '어제 오전 11:20', isMe: false },
+                    { sender: '한순옥', photo: PHOTO_ASSETS.woman3, text: '반갑습니다~ 토요일 마실에서 뵙겠습니다!', time: '어제 오후 1:05', isMe: false }
+                ]
+            },
+            {
+                id: 'chat-2',
+                type: 'direct',
+                badgeLabel: '편한 친구',
+                relationType: 'friend',
+                title: '김정숙님 (65세 · 수유동)',
+                memberCount: 2,
+                lastMsg: '인사 주셔서 감사합니다! 저도 산책 좋아합니다.',
+                time: '어제',
+                unread: 0,
+                confirmed: true,
+                schedule: null,
+                messages: [
+                    { sender: '나', photo: PHOTO_ASSETS.me, text: '안녕하세요! 프로필 보고 반가워서 인사드립니다.', time: '어제 오후 2:10', isMe: true },
+                    { sender: '김정숙', photo: PHOTO_ASSETS.woman1, text: '인사 주셔서 감사합니다! 저도 산책 좋아합니다. 언제 시간 되실 때 차 한잔해요.', time: '어제 오후 2:45', isMe: false }
+                ]
+            },
+            {
+                id: 'chat-4',
+                type: 'direct',
+                badgeLabel: '설레는 인연',
+                relationType: 'romance',
+                title: '강대식님 (68세 · 미아동)',
+                memberCount: 2,
+                lastMsg: '반갑게 인사해 주셔서 고맙습니다. 따뜻한 차 한잔해요.',
+                time: '2일 전',
+                unread: 0,
+                confirmed: true,
+                schedule: null,
+                messages: [
+                    { sender: '나', photo: PHOTO_ASSETS.me, text: '안녕하세요 강대식님! 프로필 보고 좋은 인연이 될 것 같아 인사드립니다.', time: '2일 전', isMe: true },
+                    { sender: '강대식', photo: PHOTO_ASSETS.man3, text: '반갑게 인사해 주셔서 고맙습니다. 따뜻한 차 한잔해요.', time: '2일 전', isMe: false }
+                ]
+            }
+        ];
+
+        // ==================== 공통 유틸리티 함수 ====================
+        function showToast(msg) {
+            const toast = document.getElementById('toast-box');
+            const toastText = document.getElementById('toast-text');
+            toastText.textContent = msg;
+            toast.classList.remove('hidden');
+            clearTimeout(window.toastTimer);
+            window.toastTimer = setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 2800);
+        }
+
+        function toggleLargeText() {
+            state.largeText = !state.largeText;
+            const frame = document.getElementById('app-frame');
+            if (state.largeText) {
+                frame.classList.add('large-text-mode');
+                showToast('🔍 글씨를 더 크게 키웠습니다.');
+            } else {
+                frame.classList.remove('large-text-mode');
+                showToast('보통 글씨 크기로 돌아왔습니다.');
+            }
+            renderCurrentTab();
+        }
+
+        function updateChatBadge() {
+            const totalUnread = chatRooms.reduce((sum, room) => sum + room.unread, 0);
+            const badge = document.getElementById('chat-badge');
+            if (totalUnread > 0) {
+                badge.textContent = totalUnread;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function openPhotoZoomModal(photoUrl, caption) {
+            const modalOverlay = document.getElementById('modal-overlay');
+            const modalContainer = document.getElementById('modal-container');
+            modalOverlay.classList.remove('hidden');
+            modalContainer.innerHTML = `
+                <div class="p-4 bg-[#FFFFFF] border-b border-[#E5E7EB] flex justify-between items-center">
+                    <h3 class="text-lg font-black text-[#1F2937] truncate pr-2">${caption}</h3>
+                    <button onclick="closeModal()" class="w-10 h-10 rounded-full bg-[#F3F4F6] text-[#374151] font-bold text-lg flex items-center justify-center shrink-0">✕</button>
+                </div>
+                <div class="bg-[#111827] flex items-center justify-center">
+                    <img src="${photoUrl}" alt="${caption}" onerror="this.onerror=null;this.src='https://placehold.co/600x450/F3F4F6/374151?text=사진+미리보기';" class="w-full max-h-[420px] object-contain">
+                </div>
+                <div class="p-4 bg-[#FFFFFF]">
+                    <button onclick="closeModal()" class="w-full py-3.5 rounded-2xl bg-[#1F2937] text-white font-black text-lg">
+                        사진 닫기
+                    </button>
+                </div>
+            `;
+        }
+
+        // ==================== 탭 전환 로직 (부드러운 틴트로 활성화 표시) ====================
+        function switchTab(tabName) {
+            state.currentTab = tabName;
+            closeSubpage();
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove(
+                    'text-[#6D4C3D]', 'bg-[#F5EFEA]',
+                    'text-[#2E5A44]', 'bg-[#EDF4F0]',
+                    'font-black'
+                );
+                btn.classList.add('text-[#6B7280]', 'font-bold');
+            });
+
+            const activeBtn = document.getElementById(`nav-${tabName}`);
+            activeBtn.classList.remove('text-[#6B7280]', 'font-bold');
+            activeBtn.classList.add('font-black');
+
+            if (tabName === 'neighbors') {
+                activeBtn.classList.add('text-[#2E5A44]', 'bg-[#EDF4F0]');
+            } else {
+                activeBtn.classList.add('text-[#6D4C3D]', 'bg-[#F5EFEA]');
+            }
+
+            const fab = document.getElementById('fab-create-btn');
+            if (tabName === 'home') {
+                fab.classList.remove('hidden');
+            } else {
+                fab.classList.add('hidden');
+            }
+
+            renderCurrentTab();
+        }
+
+        function renderCurrentTab() {
+            const container = document.getElementById('main-content');
+            container.scrollTop = 0;
+
+            if (state.currentTab === 'home') renderHomeTab(container);
+            else if (state.currentTab === 'neighbors') renderNeighborsTab(container);
+            else if (state.currentTab === 'chat') renderChatTab(container);
+            else if (state.currentTab === 'my') renderMyTab(container);
+        }
+
+        // ==================== [탭 1: 마실 (홈 - 90% 화이트 바탕 + 10% 진한 브라운 CTA)] ====================
+        function renderHomeTab(container) {
+            const categories = ['전체', '식사·차', '산책·운동', '문화·여행', '동네마실'];
+            let filteredMasils = state.selectedCategory === '전체'
+                ? masils
+                : masils.filter(m => m.category === state.selectedCategory);
+
+            if (state.searchQuery.trim() !== '') {
+                const q = state.searchQuery.trim().toLowerCase();
+                filteredMasils = filteredMasils.filter(m =>
+                    m.title.toLowerCase().includes(q) || m.location.toLowerCase().includes(q)
+                );
+            }
+
+            container.innerHTML = `
+                <div class="fade-in">
+                    <!-- 상단 헤더 (깨끗한 화이트 바탕) -->
+                    <header class="bg-[#FFFFFF] px-4 pt-3.5 pb-3 border-b border-[#E5E7EB] sticky top-0 z-10">
+                        <div class="flex justify-between items-center gap-2 mb-3">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <span class="px-2.5 py-1 rounded-lg bg-[#F5EFEA] text-[#6D4C3D] border border-[#E6D8CC] font-black text-sm shrink-0">마실수다</span>
+                                <button onclick="openNeighborhoodModal()" class="flex items-center gap-1 text-lg font-black text-[#1F2937] active:opacity-70 truncate">
+                                    <span>${state.selectedNeighborhood}</span>
+                                    <span class="text-xs text-[#6B7280]">▼</span>
+                                </button>
+                            </div>
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                <button onclick="toggleSearchBox()" class="p-2 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] text-[#374151]" aria-label="마실 찾기">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                </button>
+                                <button onclick="toggleLargeText()" class="px-3 py-2 rounded-xl border ${state.largeText ? 'border-[#6D4C3D] bg-[#F5EFEA] text-[#6D4C3D]' : 'border-[#E5E7EB] bg-[#FFFFFF] text-[#374151]'} font-black text-sm">
+                                    ${state.largeText ? '가- 보통 글씨' : '가+ 글씨 더 크게'}
+                                </button>
+                            </div>
+                        </div>
+
+                        ${state.searchOpen ? `
+                            <div class="mb-3 flex gap-2">
+                                <input id="masil-search-input" type="text" value="${state.searchQuery}" oninput="updateSearchQuery(this.value)" placeholder="산책, 칼국수, 공원 등 검색" class="flex-1 px-3.5 py-2.5 rounded-xl border border-[#D1D5DB] bg-[#F7F8FA] text-base focus:outline-none focus:border-[#6D4C3D]">
+                                ${state.searchQuery ? `<button onclick="updateSearchQuery('')" class="px-3 rounded-xl bg-[#F3F4F6] text-[#4B5563] font-bold text-sm">지우기</button>` : ''}
+                            </div>
+                        ` : ''}
+
+                        <!-- 카테고리 알약 버튼 (진한 채우기 대신 연한 브라운 틴트 + 테두리) -->
+                        <div class="flex gap-2 overflow-x-auto no-scrollbar pb-0.5">
+                            ${categories.map(cat => `
+                                <button onclick="selectCategory('${cat}')" class="px-4 py-2 rounded-full text-base font-bold whitespace-nowrap transition-colors border ${
+                                    state.selectedCategory === cat
+                                        ? 'bg-[#F5EFEA] text-[#6D4C3D] border-[#6D4C3D] font-black'
+                                        : 'bg-[#FFFFFF] text-[#4B5563] border-[#E5E7EB] hover:bg-[#F7F8FA]'
+                                }">
+                                    ${cat}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </header>
+
+                    <!-- 섹션 제목 -->
+                    <div class="px-5 pt-4 pb-2.5 flex justify-between items-center">
+                        <h2 class="text-lg font-black text-[#1F2937]">함께 나가는 우리 동네 마실</h2>
+                        <span class="text-sm text-[#6B7280] font-bold">총 ${filteredMasils.length}건</span>
+                    </div>
+
+                    <!-- 마실 리스트 (순백색 카드 + 얇은 회색 테두리) -->
+                    <div class="px-4 space-y-3.5">
+                        ${filteredMasils.length === 0 ? `
+                            <div class="bg-[#FFFFFF] rounded-2xl p-8 border border-[#E5E7EB] text-center space-y-2">
+                                <p class="text-lg font-black text-[#1F2937]">조건에 맞는 마실이 없어요</p>
+                                <p class="text-base text-[#6B7280]">다른 분류를 선택하거나 직접 마실을 만들어 보세요.</p>
+                            </div>
+                        ` : filteredMasils.map((m, idx) => `
+                            <article onclick="openMasilDetail(${m.id})" class="bg-[#FFFFFF] rounded-2xl p-5 border border-[#E5E7EB] hover:border-[#9CA3AF] active:scale-[0.99] transition-transform cursor-pointer">
+                                <!-- 상단 일시 배지 (연한 브라운 틴트 #F5EFEA) & 분류 -->
+                                <div class="flex flex-wrap items-center gap-2 mb-3">
+                                    <span class="px-3 py-1 rounded-lg bg-[#F5EFEA] text-[#6D4C3D] border border-[#E6D8CC] font-black text-sm">
+                                        🗓️ ${m.dateBadge}
+                                    </span>
+                                    <span class="px-2.5 py-1 rounded-lg bg-[#F7F8FA] text-[#4B5563] border border-[#E5E7EB] font-bold text-sm">
+                                        ${m.category}
+                                    </span>
+                                </div>
+
+                                <!-- 마실 제목 -->
+                                <h3 class="text-xl font-black text-[#1F2937] leading-snug mb-2.5">
+                                    ${m.title}
+                                </h3>
+
+                                <!-- 장소 (빨간 핀 + 위치) -->
+                                <p class="text-base text-[#4B5563] font-bold flex items-center gap-1.5 mb-4">
+                                    <svg class="w-5 h-5 text-[#DC2626] shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                                    <span>${m.location}</span>
+                                </p>
+
+                                <!-- 하단 참여 현황 -->
+                                <div class="pt-3.5 border-t border-[#F3F4F6] flex items-center justify-between">
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="flex -space-x-2">
+                                            ${m.participants.slice(0, 3).map(p => renderAvatarImg(p.photo, p.name, 'w-9 h-9', 'border-2 border-[#FFFFFF]')).join('')}
+                                        </div>
+                                        <span class="text-base font-black text-[#6D4C3D]">
+                                            ${m.currentSpots}/${m.maxSpots}명 참여 중
+                                        </span>
+                                    </div>
+                                    <span class="text-sm font-bold text-[#4B5563] bg-[#F7F8FA] px-3 py-1.5 rounded-lg border border-[#E5E7EB]">
+                                        자세히 보기 &gt;
+                                    </span>
+                                </div>
+                            </article>
+
+                            ${idx === 0 ? `
+                                <!-- 우리 동네 지난 마실 후기 (화이트 카드 바탕) -->
+                                <section class="bg-[#FFFFFF] rounded-2xl p-4 border border-[#E5E7EB] my-1" onclick="event.stopPropagation()">
+                                    <div class="mb-3 px-0.5">
+                                        <h3 class="text-lg font-black text-[#1F2937]">📸 우리 동네 지난 마실 후기</h3>
+                                        <p class="text-sm text-[#6B7280]">이웃들이 함께 다녀온 따뜻한 만남 이야기</p>
+                                    </div>
+                                    <div class="flex gap-3 overflow-x-auto no-scrollbar pb-1">
+                                        ${masilReviews.map(rev => `
+                                            <div onclick="openPhotoZoomModal('${rev.photo}', '${rev.title}')" class="w-[240px] shrink-0 bg-[#F7F8FA] rounded-xl overflow-hidden border border-[#E5E7EB] cursor-pointer active:scale-[0.98] transition-transform">
+                                                <div class="relative h-32 w-full bg-[#E5E7EB]">
+                                                    <img src="${rev.photo}" alt="${rev.title}" onerror="this.onerror=null;this.src='https://placehold.co/400x250/F3F4F6/374151?text=마실+후기+사진';" class="w-full h-full object-cover">
+                                                    <span class="absolute top-2 left-2 bg-[#1F2937]/85 text-white text-xs font-bold px-2.5 py-1 rounded-md">
+                                                        ${rev.date}
+                                                    </span>
+                                                </div>
+                                                <div class="p-3.5 bg-[#FFFFFF]">
+                                                    <p class="text-sm font-black text-[#6D4C3D] mb-1 truncate">${rev.title}</p>
+                                                    <p class="text-sm text-[#1F2937] font-medium leading-snug line-clamp-2 mb-2">${rev.comment}</p>
+                                                    <span class="text-xs text-[#6B7280] font-bold">${rev.author}</span>
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </section>
+                            ` : ''}
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function toggleSearchBox() {
+            state.searchOpen = !state.searchOpen;
+            if (!state.searchOpen) state.searchQuery = '';
+            renderCurrentTab();
+        }
+
+        function updateSearchQuery(val) {
+            state.searchQuery = val;
+            renderCurrentTab();
+            const input = document.getElementById('masil-search-input');
+            if (input) {
+                input.focus();
+                input.setSelectionRange(val.length, val.length);
+            }
+        }
+
+        function selectCategory(cat) {
+            state.selectedCategory = cat;
+            renderCurrentTab();
+        }
+
+        function openNeighborhoodModal() {
+            const modalOverlay = document.getElementById('modal-overlay');
+            const modalContainer = document.getElementById('modal-container');
+            modalOverlay.classList.remove('hidden');
+            modalContainer.innerHTML = `
+                <div class="p-6 space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-xl font-black text-[#1F2937]">어느 동네 마실을 볼까요?</h3>
+                        <button onclick="closeModal()" class="w-10 h-10 rounded-full bg-[#F3F4F6] text-[#374151] font-bold text-lg">✕</button>
+                    </div>
+                    <div class="space-y-2.5">
+                        ${state.neighborhoods.map(dong => `
+                            <button onclick="changeNeighborhood('${dong}')" class="w-full p-4 rounded-2xl text-left text-lg font-bold flex justify-between items-center border ${
+                                state.selectedNeighborhood === dong
+                                    ? 'border-[#6D4C3D] bg-[#F5EFEA] text-[#6D4C3D]'
+                                    : 'border-[#E5E7EB] bg-[#FFFFFF] text-[#1F2937]'
+                            }">
+                                <span>📍 ${dong}</span>
+                                ${state.selectedNeighborhood === dong ? '<span>✓ 선택됨</span>' : ''}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function changeNeighborhood(dong) {
+            state.selectedNeighborhood = dong;
+            closeModal();
+            showToast(`📍 활동 동네가 [${dong}]으로 변경되었습니다.`);
+            renderCurrentTab();
+        }
+
+        // ==================== [마실 상세 화면 (화이트 바탕 + 최하단 진한 브라운 CTA)] ====================
+        function openMasilDetail(id) {
+            const m = masils.find(item => item.id === id);
+            if (!m) return;
+
+            const subpage = document.getElementById('subpage-container');
+            subpage.classList.remove('hidden');
+            subpage.innerHTML = `
+                <!-- 상단 뒤로가기 헤더 -->
+                <header class="bg-[#FFFFFF] px-4 py-3.5 border-b border-[#E5E7EB] flex items-center gap-3 shrink-0">
+                    <button onclick="closeSubpage()" class="px-3.5 py-2 rounded-xl bg-[#F3F4F6] hover:bg-[#E5E7EB] font-bold text-base text-[#1F2937]">
+                        ← 뒤로
+                    </button>
+                    <h2 class="text-xl font-black text-[#1F2937] truncate">마실 자세히 보기</h2>
+                </header>
+
+                <!-- 본문 스크롤 영역 -->
+                <div class="flex-1 overflow-y-auto no-scrollbar p-4 space-y-3.5 pb-28">
+                    <!-- 대표 사진 -->
+                    <div class="rounded-2xl overflow-hidden border border-[#E5E7EB] h-44 bg-[#F3F4F6]">
+                        <img src="${m.photo}" alt="${m.title}" onerror="this.onerror=null;this.src='https://placehold.co/600x300/F3F4F6/374151?text=마실+안내+사진';" class="w-full h-full object-cover">
+                    </div>
+
+                    <!-- 제목 및 배지 -->
+                    <div class="bg-[#FFFFFF] rounded-2xl p-5 border border-[#E5E7EB]">
+                        <div class="flex gap-2 mb-2.5">
+                            <span class="px-3 py-1 rounded-lg bg-[#F5EFEA] text-[#6D4C3D] border border-[#E6D8CC] font-black text-sm">${m.category}</span>
+                            <span class="px-3 py-1 rounded-lg bg-[#F7F8FA] text-[#4B5563] border border-[#E5E7EB] font-bold text-sm">
+                                ${m.currentSpots}/${m.maxSpots}명 참여 중
+                            </span>
+                        </div>
+                        <h1 class="text-2xl font-black text-[#1F2937] leading-snug">${m.title}</h1>
+                    </div>
+
+                    <!-- 핵심 요약 박스 -->
+                    <div class="bg-[#FFFFFF] rounded-2xl p-5 border border-[#E5E7EB] space-y-4">
+                        <div class="flex items-start gap-3">
+                            <span class="text-xl">🗓️</span>
+                            <div>
+                                <p class="text-sm text-[#6B7280] font-bold">언제 만나나요?</p>
+                                <p class="text-lg font-black text-[#1F2937]">${m.fullDate}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <svg class="w-6 h-6 text-[#DC2626] shrink-0 mt-0.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                            <div class="flex-1">
+                                <p class="text-sm text-[#6B7280] font-bold">어디서 만나나요?</p>
+                                <p class="text-lg font-black text-[#1F2937]">${m.location}</p>
+                                <button onclick="showMapAlert('${m.location}', '${m.mapHint}')" class="mt-2 px-3.5 py-2 rounded-xl bg-[#F7F8FA] border border-[#E5E7EB] text-sm font-black text-[#374151]">
+                                    🗺️ 만나는 장소 약도 보기 &gt;
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <span class="text-xl">💰</span>
+                            <div>
+                                <p class="text-sm text-[#6B7280] font-bold">예상 비용</p>
+                                <p class="text-lg font-black text-[#1F2937]">${m.cost}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <span class="text-xl">👥</span>
+                            <div>
+                                <p class="text-sm text-[#6B7280] font-bold">모집 대상</p>
+                                <p class="text-lg font-black text-[#1F2937]">${m.targetDesc}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 마실 소개글 -->
+                    <div class="bg-[#FFFFFF] rounded-2xl p-5 border border-[#E5E7EB]">
+                        <h3 class="text-lg font-black text-[#1F2937] mb-2">📝 마실 소개</h3>
+                        <p class="text-lg text-[#1F2937] leading-relaxed whitespace-pre-line">${m.description}</p>
+                    </div>
+
+                    <!-- 함께하는 분들 (상세 화면에서 마실장과 참여자 목록 노출) -->
+                    <div class="bg-[#FFFFFF] rounded-2xl p-5 border border-[#E5E7EB]">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-lg font-black text-[#1F2937]">함께하는 분들 (${m.currentSpots}/${m.maxSpots}명)</h3>
+                            <span class="text-xs font-bold text-[#4B5563] bg-[#F7F8FA] border border-[#E5E7EB] px-2.5 py-1 rounded-lg">실명·연령 인증됨</span>
+                        </div>
+                        <div class="space-y-2.5">
+                            ${m.participants.map(p => `
+                                <div class="flex items-center justify-between p-3 rounded-xl bg-[#F7F8FA] border border-[#E5E7EB]">
+                                    <div class="flex items-center gap-3">
+                                        ${renderAvatarImg(p.photo, p.name, 'w-12 h-12', 'border border-[#D1D5DB]')}
+                                        <div>
+                                            <div class="flex items-center gap-1.5">
+                                                <p class="font-black text-base text-[#1F2937]">${p.name}</p>
+                                                ${p.isHost ? `<span class="text-xs font-black bg-[#F5EFEA] text-[#6D4C3D] border border-[#E6D8CC] px-2 py-0.5 rounded">마실장</span>` : ''}
+                                            </div>
+                                            <p class="text-sm text-[#6B7280] font-medium">${p.age}</p>
+                                        </div>
+                                    </div>
+                                    <span class="text-sm font-bold text-[#4B5563] bg-[#FFFFFF] px-3 py-1 rounded-lg border border-[#E5E7EB]">${p.tag}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 최하단 고정 핵심 액션 바 (오직 이 버튼만 진한 브라운 #6D4C3D) -->
+                <div class="bg-[#FFFFFF] border-t border-[#E5E7EB] p-4 shrink-0">
+                    ${m.joined ? `
+                        <button onclick="goToJoinedChat(${m.id})" class="w-full py-4 rounded-2xl bg-[#6D4C3D] text-white font-black text-xl">
+                            💬 함께하는 마실 수다로 이동하기
+                        </button>
+                    ` : `
+                        <button onclick="confirmJoinMasil(${m.id})" class="w-full py-4 rounded-2xl bg-[#6D4C3D] hover:bg-[#583D31] text-white font-black text-xl active:scale-[0.99] transition-transform">
+                            이 마실 참여하기
+                        </button>
+                    `}
+                </div>
+            `;
+        }
+
+        function confirmJoinMasil(id) {
+            const m = masils.find(item => item.id === id);
+            const modalOverlay = document.getElementById('modal-overlay');
+            const modalContainer = document.getElementById('modal-container');
+            modalOverlay.classList.remove('hidden');
+            modalContainer.innerHTML = `
+                <div class="p-6 space-y-5 text-center">
+                    <div class="flex justify-center">
+                        ${renderAvatarImg(m.hostPhoto, m.hostName, 'w-16 h-16', 'border border-[#E5E7EB]')}
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-black text-[#1F2937] mb-2">이 마실에 참여하시겠어요?</h3>
+                        <p class="text-base text-[#6B7280] leading-relaxed">
+                            <strong class="text-[#1F2937]">${m.hostName} 마실장님</strong>의 마실에 참여하시면<br>
+                            <strong class="text-[#6D4C3D]">수다 &gt; 함께하는 마실</strong>에 바로 입장합니다.
+                        </p>
+                    </div>
+                    <div class="flex gap-3 pt-1">
+                        <button onclick="closeModal()" class="flex-1 py-4 rounded-2xl bg-[#F3F4F6] text-[#374151] font-bold text-lg">
+                            다시 생각할게요
+                        </button>
+                        <button onclick="executeJoinMasil(${m.id})" class="flex-1 py-4 rounded-2xl bg-[#6D4C3D] text-white font-black text-lg">
+                            네, 참여할게요
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function executeJoinMasil(id) {
+            const m = masils.find(item => item.id === id);
+            if (!m || m.joined) return;
+
+            m.joined = true;
+            m.currentSpots += 1;
+            m.participants.push({
+                name: '최순자 (나)',
+                isHost: false,
+                age: '66세 · 여성',
+                tag: '#반가워요',
+                photo: PHOTO_ASSETS.me
+            });
+
+            const newChatId = `chat-masil-${m.id}`;
+            chatRooms.unshift({
+                id: newChatId,
+                type: 'group',
+                badgeLabel: m.dateBadge,
+                relationType: null,
+                title: m.title,
+                memberCount: m.currentSpots,
+                lastMsg: '최순자님이 마실 수다에 들어오셨습니다.',
+                time: '방금 전',
+                unread: 1,
+                confirmed: true,
+                schedule: {
+                    date: m.fullDate,
+                    place: m.location,
+                    mapDetail: m.mapHint
+                },
+                messages: [
+                    { sender: m.hostName + ' (마실장)', photo: m.hostPhoto, text: `환영합니다! 참여해 주셔서 정말 반갑습니다.`, time: '방금 전', isMe: false }
+                ]
+            });
+
+            state.chatFilter = 'group';
+            closeModal();
+            closeSubpage();
+            updateChatBadge();
+            showToast('🎉 참여 완료! 함께하는 마실 수다에 입장했습니다.');
+            switchTab('chat');
+            openChatRoom(newChatId);
+        }
+
+        function goToJoinedChat(masilId) {
+            state.chatFilter = 'group';
+            closeSubpage();
+            switchTab('chat');
+            const targetChat = chatRooms.find(c => c.id === `chat-masil-${masilId}`) || chatRooms[0];
+            if (targetChat) openChatRoom(targetChat.id);
+        }
+
+        // ==================== [마실 만들기 모달] ====================
+        function openCreateModal() {
+            const modalOverlay = document.getElementById('modal-overlay');
+            const modalContainer = document.getElementById('modal-container');
+            modalOverlay.classList.remove('hidden');
+            modalContainer.innerHTML = `
+                <div class="p-5 border-b border-[#E5E7EB] flex justify-between items-center shrink-0">
+                    <h3 class="text-xl font-black text-[#1F2937]">새 마실 만들기</h3>
+                    <button onclick="closeModal()" class="w-10 h-10 rounded-full bg-[#F3F4F6] text-[#374151] font-bold text-lg">✕</button>
+                </div>
+                <form onsubmit="submitNewMasil(event)" class="p-5 overflow-y-auto space-y-4">
+                    <div>
+                        <label class="block text-base font-black text-[#1F2937] mb-1.5">1. 어떤 마실인가요?</label>
+                        <select id="new-category" class="w-full p-3.5 rounded-xl border border-[#D1D5DB] text-lg font-bold bg-[#FFFFFF]">
+                            <option value="산책·운동">산책·운동</option>
+                            <option value="식사·차">식사·차</option>
+                            <option value="문화·여행">문화·여행</option>
+                            <option value="동네마실">동네마실</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-base font-black text-[#1F2937] mb-1.5">2. 마실 제목 (활동 내용만 간결하게)</label>
+                        <input id="new-title" type="text" required placeholder="예: 오후 3시 가볍게 산책하고 차 한잔해요" class="w-full p-3.5 rounded-xl border border-[#D1D5DB] text-lg bg-[#FFFFFF]">
+                    </div>
+                    <div>
+                        <label class="block text-base font-black text-[#1F2937] mb-1.5">3. 언제 만날까요?</label>
+                        <input id="new-date" type="text" required value="이번 주 일요일 오후 2시" class="w-full p-3.5 rounded-xl border border-[#D1D5DB] text-lg bg-[#FFFFFF]">
+                    </div>
+                    <div>
+                        <label class="block text-base font-black text-[#1F2937] mb-1.5">4. 어디서 만날까요? (역/랜드마크)</label>
+                        <input id="new-location" type="text" required placeholder="예: 미아사거리역 2번 출구 앞" class="w-full p-3.5 rounded-xl border border-[#D1D5DB] text-lg bg-[#FFFFFF]">
+                    </div>
+                    <div>
+                        <label class="block text-base font-black text-[#1F2937] mb-1.5">5. 몇 명까지 함께할까요?</label>
+                        <select id="new-max" class="w-full p-3.5 rounded-xl border border-[#D1D5DB] text-lg font-bold bg-[#FFFFFF]">
+                            <option value="4">4명 (가장 부담 없는 소규모 추천)</option>
+                            <option value="3">3명</option>
+                            <option value="5">5명</option>
+                            <option value="6">6명</option>
+                        </select>
+                    </div>
+                    <div class="pt-2">
+                        <button type="submit" class="w-full py-4 rounded-2xl bg-[#6D4C3D] hover:bg-[#583D31] text-white font-black text-xl">
+                            마실 등록하기
+                        </button>
+                    </div>
+                </form>
+            `;
+        }
+
+        function submitNewMasil(e) {
+            e.preventDefault();
+            const cat = document.getElementById('new-category').value;
+            const title = document.getElementById('new-title').value;
+            const dateStr = document.getElementById('new-date').value;
+            const loc = document.getElementById('new-location').value;
+            const maxSpots = parseInt(document.getElementById('new-max').value, 10);
+
+            const newId = Date.now();
+            masils.unshift({
+                id: newId,
+                category: cat,
+                dateBadge: dateStr,
+                fullDate: dateStr,
+                maxSpots: maxSpots,
+                currentSpots: 1,
+                photo: PHOTO_ASSETS.tea1,
+                title: title,
+                location: loc,
+                mapHint: `${loc} 앞에서 10분 전까지 모입니다.`,
+                cost: '각자 지출 부담 (더치페이)',
+                targetDesc: `60~70대 이웃 누구나 (총 ${maxSpots}명)`,
+                hostName: '최순자 (나)',
+                hostPhoto: PHOTO_ASSETS.me,
+                description: '새로 만든 마실입니다. 편한 마음으로 함께 걸으며 좋은 이웃이 되어요!',
+                participants: [
+                    { name: '최순자 (나)', isHost: true, age: '66세 · 여성', tag: '#마실장', photo: PHOTO_ASSETS.me }
+                ],
+                joined: true
+            });
+
+            chatRooms.unshift({
+                id: `chat-masil-${newId}`,
+                type: 'group',
+                badgeLabel: dateStr,
+                relationType: null,
+                title: title,
+                memberCount: 1,
+                lastMsg: '내가 만든 마실 수다가 열렸습니다.',
+                time: '방금 전',
+                unread: 0,
+                confirmed: true,
+                schedule: { date: dateStr, place: loc, mapDetail: `${loc} 앞 만남` },
+                messages: [
+                    { sender: '최순자 (나)', photo: PHOTO_ASSETS.me, text: '안녕하세요! 마실을 개설했습니다. 반갑습니다.', time: '방금 전', isMe: true }
+                ]
+            });
+
+            closeModal();
+            state.selectedCategory = '전체';
+            renderCurrentTab();
+            showToast('✨ 새 마실이 등록되었습니다!');
+        }
+
+        // ==================== [탭 2: 이웃 (90% 화이트 바탕 + 10% 그린/로즈 핑크 핵심 버튼)] ====================
+        function renderNeighborsTab(container) {
+            let filteredPeople = neighborList.filter(p => p.type === state.neighborMode);
+            if (state.neighborFilter === 'local') {
+                const localOnly = filteredPeople.filter(p => p.isLocal);
+                if (localOnly.length > 0) filteredPeople = localOnly;
+            }
+
+            const currentPerson = filteredPeople[state.neighborIndex % filteredPeople.length];
+            const isRomance = state.neighborMode === 'romance';
+
+            const quickFilters = [
+                { id: 'all', label: '전체 보기' },
+                { id: 'local', label: '우리 동네만' },
+                { id: 'age', label: '비슷한 나이대' },
+                { id: 'interest', label: '관심사 일치' }
+            ];
+
+            container.innerHTML = `
+                <div class="fade-in">
+                    <!-- 최상단 50:50 모드 전환 스위치 (진한 채우기 대신 부드러운 연한 틴트 + 컬러 테두리) -->
+                    <header class="bg-[#FFFFFF] p-4 border-b border-[#E5E7EB] sticky top-0 z-10 space-y-3">
+                        <div class="grid grid-cols-2 gap-2 bg-[#F7F8FA] p-1.5 rounded-2xl border border-[#E5E7EB]">
+                            <button onclick="switchNeighborMode('friend')" class="py-3 rounded-xl font-black text-base transition-colors border ${
+                                !isRomance
+                                    ? 'bg-[#EDF4F0] text-[#2E5A44] border-[#2E5A44]'
+                                    : 'border-transparent text-[#6B7280] hover:bg-[#FFFFFF]'
+                            }">
+                                🤝 편한 친구 찾기
+                            </button>
+                            <button onclick="switchNeighborMode('romance')" class="py-3 rounded-xl font-black text-base transition-colors border ${
+                                isRomance
+                                    ? 'bg-[#FDF1F4] text-[#C85A7C] border-[#C85A7C]'
+                                    : 'border-transparent text-[#6B7280] hover:bg-[#FFFFFF]'
+                            }">
+                                💕 설레는 인연 찾기
+                            </button>
+                        </div>
+
+                        <!-- 간편 조건 필터 -->
+                        <div class="flex gap-1.5 overflow-x-auto no-scrollbar">
+                            ${quickFilters.map(f => `
+                                <button onclick="setNeighborFilter('${f.id}')" class="px-3.5 py-1.5 rounded-full text-sm font-bold whitespace-nowrap border ${
+                                    state.neighborFilter === f.id
+                                        ? (isRomance ? 'bg-[#FDF1F4] text-[#C85A7C] border-[#C85A7C]' : 'bg-[#EDF4F0] text-[#2E5A44] border-[#2E5A44]')
+                                        : 'bg-[#FFFFFF] text-[#6B7280] border-[#E5E7EB]'
+                                }">
+                                    ${f.label}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </header>
+
+                    <!-- 프로필 카드 영역 (순백색 카드 바탕) -->
+                    <div class="p-4">
+                        ${isRomance && !state.romanceAllowed ? `
+                            <div class="bg-[#FFFFFF] rounded-2xl p-8 border border-[#E5E7EB] text-center space-y-4">
+                                <div class="w-16 h-16 mx-auto rounded-full bg-[#FDF1F4] border border-[#F5D0DC] flex items-center justify-center text-3xl">🔒</div>
+                                <h3 class="text-xl font-black text-[#1F2937]">설레는 인연 찾기가 꺼져 있어요</h3>
+                                <p class="text-base text-[#6B7280] leading-relaxed">
+                                    원치 않는 연락을 막기 위해 기능을 켠 회원끼리만 서로 볼 수 있습니다.
+                                </p>
+                                <button onclick="enableRomanceMode()" class="w-full py-4 rounded-2xl bg-[#C85A7C] text-white font-black text-lg">
+                                    설레는 인연 찾기 켜기
+                                </button>
+                            </div>
+                        ` : `
+                            <div class="bg-[#FFFFFF] rounded-2xl overflow-hidden border border-[#E5E7EB]">
+                                <!-- 상단 인물 사진 및 인증 배지 영역 (화이트 배경으로 시원하게 정돈) -->
+                                <div class="bg-[#FFFFFF] p-6 pb-5 text-center border-b border-[#F3F4F6]">
+                                    <div class="flex flex-wrap justify-center gap-1.5 mb-4">
+                                        ${currentPerson.verified.map(v => `
+                                            <span class="px-3 py-1 rounded-lg text-xs font-black ${
+                                                v.includes('싱글')
+                                                    ? 'bg-[#FDF1F4] text-[#C85A7C] border border-[#F3D1DC]'
+                                                    : 'bg-[#EDF4F0] text-[#2E5A44] border border-[#CFE2D7]'
+                                            }">
+                                                ✓ ${v}
+                                            </span>
+                                        `).join('')}
+                                    </div>
+
+                                    <!-- 한국인·동양인 시니어 인물 포트레이트 -->
+                                    <div class="flex justify-center mb-3">
+                                        ${renderAvatarImg(
+                                            currentPerson.photo,
+                                            currentPerson.name,
+                                            'w-28 h-28',
+                                            'border-2 border-[#E5E7EB]'
+                                        )}
+                                    </div>
+
+                                    <h2 class="text-2xl font-black text-[#1F2937]">
+                                        ${currentPerson.name} <span class="text-lg font-bold text-[#6B7280]">(${currentPerson.age}세 · ${currentPerson.gender})</span>
+                                    </h2>
+                                    <p class="text-base font-bold text-[#6B7280] mt-1 flex items-center justify-center gap-1">
+                                        <svg class="w-4 h-4 text-[#DC2626]" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                                        <span>${currentPerson.dong}</span>
+                                    </p>
+                                </div>
+
+                                <!-- 자기소개 & 공통 관심사 & 최근 일상 사진 3장 -->
+                                <div class="p-5 space-y-4">
+                                    <div class="bg-[#F7F8FA] p-4 rounded-xl border border-[#E5E7EB]">
+                                        <p class="text-lg text-[#1F2937] leading-relaxed font-medium">
+                                            "${currentPerson.intro}"
+                                        </p>
+                                    </div>
+
+                                    <!-- 공통 관심사 강조 (부드러운 틴트 배지) -->
+                                    <div>
+                                        <p class="text-sm font-black ${isRomance ? 'text-[#C85A7C]' : 'text-[#2E5A44]'} mb-2">✨ 나와 같은 관심사</p>
+                                        <div class="flex flex-wrap gap-2">
+                                            ${currentPerson.commonTags.map(tag => `
+                                                <span class="px-3.5 py-1.5 rounded-xl ${
+                                                    isRomance
+                                                        ? 'bg-[#FDF1F4] text-[#C85A7C] border border-[#F3D1DC]'
+                                                        : 'bg-[#EDF4F0] text-[#2E5A44] border border-[#CFE2D7]'
+                                                } font-extrabold text-base">
+                                                    ${tag}
+                                                </span>
+                                            `).join('')}
+                                            ${currentPerson.otherTags.map(tag => `
+                                                <span class="px-3.5 py-1.5 rounded-xl bg-[#F7F8FA] text-[#4B5563] border border-[#E5E7EB] font-bold text-base">
+                                                    ${tag}
+                                                </span>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+
+                                    <!-- 최근 일상 사진 3장 -->
+                                    <div>
+                                        <p class="text-sm font-black text-[#1F2937] mb-2">📷 최근 일상 사진 (누르면 크게 보여요)</p>
+                                        <div class="grid grid-cols-3 gap-2">
+                                            ${currentPerson.dailyPhotos.map(item => `
+                                                <button type="button" onclick="openPhotoZoomModal('${item.url}', '${currentPerson.name}님의 일상: ${item.caption}')" class="aspect-square rounded-xl overflow-hidden border border-[#E5E7EB] bg-[#F3F4F6] focus:outline-none">
+                                                    <img src="${item.url}" alt="${item.caption}" onerror="this.onerror=null;this.src='https://placehold.co/300x300/F3F4F6/374151?text=일상+사진';" class="w-full h-full object-cover active:scale-95 transition-transform">
+                                                </button>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+
+                                    <!-- 하단 2개 액션 버튼 (우측 주요 버튼에만 진한 그린 #2E5A44 또는 진한 로즈 핑크 #C85A7C 적용) -->
+                                    <div class="grid grid-cols-5 gap-2.5 pt-2">
+                                        <button onclick="nextNeighbor()" class="col-span-2 py-4 rounded-2xl bg-[#F7F8FA] hover:bg-[#EEF0F3] text-[#4B5563] font-extrabold text-base border border-[#E5E7EB]">
+                                            다음 분 보기
+                                        </button>
+                                        <button onclick="openGreetingModal(${currentPerson.id})" class="col-span-3 py-4 rounded-2xl ${
+                                            isRomance
+                                                ? 'bg-[#C85A7C] hover:bg-[#B34B6C]'
+                                                : 'bg-[#2E5A44] hover:bg-[#244736]'
+                                        } text-white font-black text-base">
+                                            ${isRomance ? '💕 설레는 인사 보내기' : '👋 반가워요 인사하기'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `}
+                    </div>
+                </div>
+            `;
+        }
+
+        function switchNeighborMode(mode) {
+            state.neighborMode = mode;
+            state.neighborIndex = 0;
+            renderCurrentTab();
+        }
+
+        function setNeighborFilter(filterId) {
+            state.neighborFilter = filterId;
+            state.neighborIndex = 0;
+            renderCurrentTab();
+        }
+
+        function enableRomanceMode() {
+            state.romanceAllowed = true;
+            showToast('💕 설레는 인연 찾기가 켜졌습니다.');
+            renderCurrentTab();
+        }
+
+        function nextNeighbor() {
+            state.neighborIndex += 1;
+            renderCurrentTab();
+        }
+
+        function openGreetingModal(personId) {
+            const p = neighborList.find(item => item.id === personId);
+            const isRomance = p.type === 'romance';
+            const templates = isRomance
+                ? [
+                    `안녕하세요 ${p.name}님! 프로필 보고 좋은 인연이 될 것 같아 정중히 인사드립니다.`,
+                    `반갑습니다 ${p.name}님! 시간이 되실 때 따뜻한 차 한잔하며 수다 나누고 싶어요.`
+                ]
+                : [
+                    `안녕하세요 ${p.name}님! 관심사가 비슷해서 반가운 마음에 인사드립니다.`,
+                    `반갑습니다! 동네에서 산책이나 식사 함께하는 편한 친구로 지내고 싶어요.`
+                ];
+
+            const modalOverlay = document.getElementById('modal-overlay');
+            const modalContainer = document.getElementById('modal-container');
+            modalOverlay.classList.remove('hidden');
+            modalContainer.innerHTML = `
+                <div class="p-6 space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-xl font-black text-[#1F2937]">${p.name}님께 인사 보내기</h3>
+                        <button onclick="closeModal()" class="w-10 h-10 rounded-full bg-[#F3F4F6] text-[#374151] font-bold text-lg">✕</button>
+                    </div>
+                    <p class="text-base text-[#6B7280]">어색하지 않도록 준비된 인사말을 눌러 바로 보내보세요.</p>
+                    <div class="space-y-3">
+                        ${templates.map(msg => `
+                            <button onclick="sendGreeting('${p.name}', '${p.photo}', ${p.age}, '${p.dong.split(' ')[1]}', '${p.type}', '${msg}')" class="w-full p-4 rounded-2xl text-left border ${
+                                isRomance
+                                    ? 'border-[#F3D1DC] bg-[#FDF1F4] hover:bg-[#FCE6ED]'
+                                    : 'border-[#CFE2D7] bg-[#EDF4F0] hover:bg-[#E1EDE6]'
+                            } text-[#1F2937] font-bold text-base leading-relaxed">
+                                "${msg}"
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function sendGreeting(name, photoUrl, age, dong, relationType, message) {
+            closeModal();
+            let targetChatId = '';
+            const existing = chatRooms.find(c => c.type === 'direct' && c.title.includes(name));
+            if (existing) {
+                existing.messages.push({ sender: '나', photo: PHOTO_ASSETS.me, text: message, time: '방금 전', isMe: true });
+                existing.lastMsg = message;
+                existing.time = '방금 전';
+                targetChatId = existing.id;
+            } else {
+                targetChatId = `chat-direct-${Date.now()}`;
+                chatRooms.unshift({
+                    id: targetChatId,
+                    type: 'direct',
+                    badgeLabel: relationType === 'romance' ? '설레는 인연' : '편한 친구',
+                    relationType: relationType,
+                    title: `${name}님 (${age}세 · ${dong})`,
+                    memberCount: 2,
+                    lastMsg: message,
+                    time: '방금 전',
+                    unread: 0,
+                    confirmed: true,
+                    schedule: null,
+                    messages: [
+                        { sender: '나', photo: PHOTO_ASSETS.me, text: message, time: '방금 전', isMe: true }
+                    ]
+                });
+            }
+            state.chatFilter = 'direct';
+            showToast(`💌 ${name}님께 인사를 보냈습니다! [이웃과 수다]로 이동합니다.`);
+            switchTab('chat');
+            openChatRoom(targetChatId);
+        }
+
+        // ==================== [탭 3: 수다 (화이트 바탕 + 부드러운 틴트 분류 탭)] ====================
+        function switchChatFilter(filterType) {
+            state.chatFilter = filterType;
+            renderCurrentTab();
+        }
+
+        function renderChatTab(container) {
+            const groupCount = chatRooms.filter(r => r.type === 'group').length;
+            const directCount = chatRooms.filter(r => r.type === 'direct').length;
+            const filteredRooms = chatRooms.filter(r => r.type === state.chatFilter);
+
+            container.innerHTML = `
+                <div class="fade-in">
+                    <header class="bg-[#FFFFFF] px-4 pt-4 pb-3 border-b border-[#E5E7EB] sticky top-0 z-10">
+                        <div class="px-1">
+                            <h1 class="text-2xl font-black text-[#1F2937]">수다</h1>
+                            <p class="text-sm text-[#6B7280] mt-0.5">마실 일정 확인과 반가운 안부 수다</p>
+                        </div>
+
+                        <!-- 상단 50:50 구분 탭 (부드러운 틴트 + 컬러 테두리) -->
+                        <div class="grid grid-cols-2 gap-2 bg-[#F7F8FA] p-1.5 rounded-2xl border border-[#E5E7EB] mt-3">
+                            <button onclick="switchChatFilter('group')" class="py-3 rounded-xl font-black text-base transition-colors border ${
+                                state.chatFilter === 'group'
+                                    ? 'bg-[#F5EFEA] text-[#6D4C3D] border-[#6D4C3D]'
+                                    : 'border-transparent text-[#6B7280] hover:bg-[#FFFFFF]'
+                            }">
+                                🗓️ 함께하는 마실 (${groupCount})
+                            </button>
+                            <button onclick="switchChatFilter('direct')" class="py-3 rounded-xl font-black text-base transition-colors border ${
+                                state.chatFilter === 'direct'
+                                    ? 'bg-[#EDF4F0] text-[#2E5A44] border-[#2E5A44]'
+                                    : 'border-transparent text-[#6B7280] hover:bg-[#FFFFFF]'
+                            }">
+                                💬 이웃과 수다 (${directCount})
+                            </button>
+                        </div>
+                    </header>
+
+                    <div class="p-4 space-y-3">
+                        ${filteredRooms.length === 0 ? `
+                            <div class="bg-[#FFFFFF] rounded-2xl p-8 border border-[#E5E7EB] text-center space-y-2">
+                                <p class="text-lg font-black text-[#1F2937]">아직 나눈 수다가 없습니다</p>
+                                <p class="text-base text-[#6B7280]">
+                                    ${state.chatFilter === 'group'
+                                        ? '마실 탭에서 마음에 드는 마실에 참여해 보세요!'
+                                        : '이웃 탭에서 반가운 분께 인사를 건네보세요!'}
+                                </p>
+                            </div>
+                        ` : filteredRooms.map(room => `
+                            <div onclick="openChatRoom('${room.id}')" class="bg-[#FFFFFF] rounded-2xl p-4 border border-[#E5E7EB] hover:border-[#9CA3AF] active:scale-[0.99] transition-transform cursor-pointer">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="px-3 py-1 rounded-lg text-sm font-black ${
+                                        room.type === 'group'
+                                            ? 'bg-[#F5EFEA] text-[#6D4C3D] border border-[#E6D8CC]'
+                                            : (room.relationType === 'romance'
+                                                ? 'bg-[#FDF1F4] text-[#C85A7C] border border-[#F3D1DC]'
+                                                : 'bg-[#EDF4F0] text-[#2E5A44] border border-[#CFE2D7]')
+                                    }">
+                                        ${room.type === 'group' ? `🗓️ ${room.badgeLabel}` : `[${room.badgeLabel}]`}
+                                    </span>
+                                    <span class="text-sm text-[#6B7280] font-medium">${room.time}</span>
+                                </div>
+                                <div class="flex justify-between items-center gap-2">
+                                    <div class="min-w-0 flex-1">
+                                        <h3 class="text-lg font-black text-[#1F2937] truncate">
+                                            ${room.title} ${room.type === 'group' ? `<span class="text-sm font-bold text-[#6B7280]">(${room.memberCount}명)</span>` : ''}
+                                        </h3>
+                                        <p class="text-base text-[#6B7280] truncate mt-1">${room.lastMsg}</p>
+                                    </div>
+                                    ${room.unread > 0 ? `
+                                        <span class="w-7 h-7 rounded-full bg-[#6D4C3D] text-white font-black text-sm flex items-center justify-center shrink-0">
+                                            ${room.unread}
+                                        </span>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // ==================== [수다방 내부 화면] ====================
+        function openChatRoom(chatId) {
+            state.activeChatId = chatId;
+            const room = chatRooms.find(r => r.id === chatId);
+            if (!room) return;
+
+            room.unread = 0;
+            updateChatBadge();
+
+            const subpage = document.getElementById('subpage-container');
+            subpage.classList.remove('hidden');
+            renderChatRoomContent(room);
+        }
+
+        function renderChatRoomContent(room) {
+            const isGroup = room.type === 'group';
+            const isRomanceDirect = room.type === 'direct' && room.relationType === 'romance';
+            const sendBtnBg = isGroup ? 'bg-[#6D4C3D]' : (isRomanceDirect ? 'bg-[#C85A7C]' : 'bg-[#2E5A44]');
+            const myBubbleBg = isGroup ? 'bg-[#F5EFEA] text-[#1F2937] border border-[#E6D8CC]' : (isRomanceDirect ? 'bg-[#FDF1F4] text-[#1F2937] border border-[#F3D1DC]' : 'bg-[#EDF4F0] text-[#1F2937] border border-[#CFE2D7]');
+
+            const subpage = document.getElementById('subpage-container');
+            subpage.innerHTML = `
+                <!-- 상단 헤더 -->
+                <header class="bg-[#FFFFFF] px-4 py-3 border-b border-[#E5E7EB] flex items-center justify-between shrink-0">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <button onclick="closeSubpage(); renderCurrentTab();" class="px-3 py-2 rounded-xl bg-[#F3F4F6] font-bold text-base text-[#1F2937] shrink-0">
+                            ← 목록
+                        </button>
+                        <h2 class="text-lg font-black text-[#1F2937] truncate">${room.title}</h2>
+                    </div>
+                </header>
+
+                <!-- 최상단 고정 안내판 (연한 브라운 틴트) -->
+                ${room.schedule ? `
+                    <div class="bg-[#F5EFEA] border-b border-[#E6D8CC] p-3.5 shrink-0">
+                        <div class="flex justify-between items-center">
+                            <span class="font-black text-[#6D4C3D] text-base">📌 마실 일정 안내</span>
+                            <button onclick="toggleNotice()" class="text-sm font-bold text-[#6D4C3D] underline">
+                                ${state.isNoticeExpanded ? '접기 ▲' : '펼치기 ▼'}
+                            </button>
+                        </div>
+                        ${state.isNoticeExpanded ? `
+                            <div class="mt-2 space-y-2.5">
+                                <p class="text-base font-bold text-[#1F2937]">
+                                    • 일시: ${room.schedule.date}<br>
+                                    • 장소: ${room.schedule.place}
+                                </p>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <button onclick="showMapAlert('${room.schedule.place}', '${room.schedule.mapDetail}')" class="py-2.5 px-3 rounded-xl bg-[#FFFFFF] border border-[#E5E7EB] font-extrabold text-sm text-[#374151]">
+                                        🗺️ 약속 장소 지도 보기
+                                    </button>
+                                    <button onclick="confirmAttendance('${room.id}')" class="py-2.5 px-3 rounded-xl font-extrabold text-sm ${
+                                        room.confirmed
+                                            ? 'bg-[#FFFFFF] border border-[#6D4C3D] text-[#6D4C3D]'
+                                            : 'bg-[#6D4C3D] text-white'
+                                    }">
+                                        ${room.confirmed ? '✓ 참석 확정됨' : '✋ 참석 확정 누르기'}
+                                    </button>
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                ` : ''}
+
+                <!-- 수다 메시지 영역 -->
+                <div id="chat-messages-box" class="flex-1 overflow-y-auto no-scrollbar p-4 space-y-4">
+                    ${room.messages.map(m => m.isMe ? `
+                        <div class="flex flex-col items-end">
+                            <div class="${myBubbleBg} px-4 py-3 rounded-2xl rounded-tr-sm max-w-[82%] text-lg font-medium leading-relaxed">
+                                ${m.text}
+                            </div>
+                            <span class="text-xs text-[#6B7280] mt-1 mr-1">${m.time}</span>
+                        </div>
+                    ` : `
+                        <div class="flex items-start gap-2.5">
+                            ${renderAvatarImg(m.photo, m.sender, 'w-10 h-10', 'border border-[#E5E7EB]')}
+                            <div class="max-w-[78%]">
+                                <span class="text-sm font-bold text-[#6B7280] ml-1">${m.sender}</span>
+                                <div class="bg-[#FFFFFF] border border-[#E5E7EB] text-[#1F2937] px-4 py-3 rounded-2xl rounded-tl-sm text-lg font-medium leading-relaxed mt-1">
+                                    ${m.text}
+                                </div>
+                                <span class="text-xs text-[#6B7280] mt-1 ml-1 block">${m.time}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <!-- 하단 입력창 (오직 '전송' 버튼만 진한 포인트 컬러) -->
+                <div class="bg-[#FFFFFF] border-t border-[#E5E7EB] p-3 shrink-0">
+                    <div class="flex items-center gap-1.5">
+                        <button onclick="showToast('📷 사진 보내기 및 장소 공유 메뉴입니다.')" class="w-11 h-12 rounded-xl bg-[#F7F8FA] text-[#374151] border border-[#E5E7EB] font-black text-xl shrink-0 flex items-center justify-center" title="더보기">
+                            +
+                        </button>
+                        <button onclick="simulateVoiceInput()" class="px-2.5 h-12 rounded-xl bg-[#F7F8FA] text-[#374151] border border-[#E5E7EB] font-bold text-sm shrink-0 flex items-center gap-1" title="말로 글쓰기">
+                            <span>🎤</span>
+                            <span>말하기</span>
+                        </button>
+                        <input id="chat-input" type="text" placeholder="수다 입력" onkeypress="if(event.key==='Enter') sendChatMessage()" class="flex-1 min-w-0 h-12 px-3 rounded-xl border border-[#D1D5DB] bg-[#FFFFFF] text-lg focus:outline-none focus:border-[#6D4C3D]">
+                        <button onclick="sendChatMessage()" class="px-4 h-12 rounded-xl ${sendBtnBg} text-white font-black text-base shrink-0">
+                            전송
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            const msgBox = document.getElementById('chat-messages-box');
+            msgBox.scrollTop = msgBox.scrollHeight;
+        }
+
+        function toggleNotice() {
+            state.isNoticeExpanded = !state.isNoticeExpanded;
+            const room = chatRooms.find(r => r.id === state.activeChatId);
+            if (room) renderChatRoomContent(room);
+        }
+
+        function confirmAttendance(chatId) {
+            const room = chatRooms.find(r => r.id === chatId);
+            if (!room || room.confirmed) {
+                showToast('이미 참석 확정이 완료되었습니다.');
+                return;
+            }
+            room.confirmed = true;
+            room.messages.push({
+                sender: '나',
+                photo: PHOTO_ASSETS.me,
+                text: '✋ 마실 참석 확정합니다! 반갑게 뵙겠습니다.',
+                time: '방금 전',
+                isMe: true
+            });
+            showToast('✓ 참석이 확정되어 참여자분들께 알렸습니다.');
+            renderChatRoomContent(room);
+        }
+
+        function showMapAlert(place, detail) {
+            const modalOverlay = document.getElementById('modal-overlay');
+            const modalContainer = document.getElementById('modal-container');
+            modalOverlay.classList.remove('hidden');
+            modalContainer.innerHTML = `
+                <div class="p-6 space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-xl font-black text-[#1F2937]">🗺️ 만나는 장소 안내</h3>
+                        <button onclick="closeModal()" class="w-10 h-10 rounded-full bg-[#F3F4F6] text-[#374151] font-bold text-lg">✕</button>
+                    </div>
+                    <div class="bg-[#F7F8FA] border border-[#E5E7EB] rounded-2xl p-4 space-y-2">
+                        <p class="text-lg font-black text-[#6D4C3D]">📍 ${place}</p>
+                        <p class="text-base text-[#1F2937] leading-relaxed">${detail}</p>
+                    </div>
+                    <div class="bg-[#F7F8FA] rounded-2xl h-36 flex flex-col items-center justify-center border border-[#E5E7EB] text-[#4B5563] font-bold">
+                        <span class="text-3xl mb-1">🧭</span>
+                        <span>큰 글씨 길찾기 지도 화면</span>
+                    </div>
+                    <button onclick="closeModal()" class="w-full py-4 rounded-2xl bg-[#6D4C3D] text-white font-black text-lg">
+                        확인했습니다
+                    </button>
+                </div>
+            `;
+        }
+
+        function simulateVoiceInput() {
+            const input = document.getElementById('chat-input');
+            input.value = '네, 저도 시간 맞춰서 일찍 나가겠습니다!';
+            showToast('🎤 말씀하신 내용이 글자로 입력되었습니다. [전송]을 눌러주세요.');
+        }
+
+        function sendChatMessage() {
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const room = chatRooms.find(r => r.id === state.activeChatId);
+            if (!room) return;
+
+            room.messages.push({
+                sender: '나',
+                photo: PHOTO_ASSETS.me,
+                text: text,
+                time: '방금 전',
+                isMe: true
+            });
+            room.lastMsg = text;
+            room.time = '방금 전';
+
+            renderChatRoomContent(room);
+        }
+
+        // ==================== [탭 4: 내 정보 (화이트 바탕 + 절제된 포인트)] ====================
+        function renderMyTab(container) {
+            container.innerHTML = `
+                <div class="fade-in p-4 space-y-4">
+                    <h1 class="text-2xl font-black text-[#1F2937] px-1 pt-1">내 정보</h1>
+
+                    <!-- 내 프로필 카드 -->
+                    <div class="bg-[#FFFFFF] rounded-2xl p-5 border border-[#E5E7EB] flex items-center gap-4">
+                        ${renderAvatarImg(PHOTO_ASSETS.me, '최순자', 'w-20 h-20', 'border border-[#E5E7EB]')}
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2">
+                                <h2 class="text-2xl font-black text-[#1F2937]">최순자</h2>
+                                <span class="text-base font-bold text-[#6B7280]">(66세·여성)</span>
+                            </div>
+                            <p class="text-base font-bold text-[#6B7280] mt-0.5">📍 ${state.selectedNeighborhood}</p>
+                            <div class="flex flex-wrap gap-1.5 mt-2">
+                                <span class="px-2.5 py-0.5 rounded-md bg-[#EDF4F0] text-[#2E5A44] border border-[#CFE2D7] font-extrabold text-xs">✓ 본인인증 완료</span>
+                                <span class="px-2.5 py-0.5 rounded-md bg-[#FDF1F4] text-[#C85A7C] border border-[#F3D1DC] font-extrabold text-xs">✓ 싱글 인증</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 화면 및 만남 설정 -->
+                    <div class="bg-[#FFFFFF] rounded-2xl p-5 border border-[#E5E7EB] space-y-4">
+                        <h3 class="text-lg font-black text-[#1F2937]">글씨 및 만남 설정</h3>
+
+                        <!-- 글씨 크기 설정 -->
+                        <div class="flex items-center justify-between py-2 border-b border-[#F3F4F6]">
+                            <div>
+                                <p class="text-lg font-bold text-[#1F2937]">글씨 더 크게 보기</p>
+                                <p class="text-sm text-[#6B7280]">화면의 글자와 버튼을 크게 봅니다</p>
+                            </div>
+                            <button onclick="toggleLargeText()" class="px-4 py-2.5 rounded-xl font-black text-base border ${
+                                state.largeText
+                                    ? 'bg-[#F5EFEA] text-[#6D4C3D] border-[#6D4C3D]'
+                                    : 'bg-[#FFFFFF] text-[#4B5563] border-[#E5E7EB]'
+                            }">
+                                ${state.largeText ? '크게 보기 켜짐' : '보통 크기'}
+                            </button>
+                        </div>
+
+                        <!-- 설레는 인연 공개 설정 -->
+                        <div class="flex items-center justify-between py-2 border-b border-[#F3F4F6]">
+                            <div>
+                                <p class="text-lg font-bold text-[#1F2937]">설레는 인연 공개 설정</p>
+                                <p class="text-sm text-[#6B7280]">이성 인연 찾기 노출 여부를 정합니다</p>
+                            </div>
+                            <button onclick="toggleRomanceSetting()" class="px-3.5 py-2.5 rounded-xl font-black text-sm border ${
+                                state.romanceAllowed
+                                    ? 'bg-[#FDF1F4] text-[#C85A7C] border-[#C85A7C]'
+                                    : 'bg-[#FFFFFF] text-[#6B7280] border-[#E5E7EB]'
+                            }">
+                                ${state.romanceAllowed ? '설레는 인연도 함께' : '편한 친구만'}
+                            </button>
+                        </div>
+
+                        <!-- 차단 목록 관리 -->
+                        <div class="flex items-center justify-between pt-1">
+                            <div>
+                                <p class="text-lg font-bold text-[#1F2937]">차단 목록 관리</p>
+                                <p class="text-sm text-[#6B7280]">불편한 이용자 차단 및 신고 내역</p>
+                            </div>
+                            <button onclick="showToast('🛡️ 차단된 회원이 없습니다. 안전하게 보호 중입니다.')" class="px-4 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E5E7EB] text-[#374151] font-bold text-sm">
+                                관리 &gt;
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 시니어 안심 고객센터 전화 연결 카드 -->
+                    <div class="bg-[#FFFFFF] rounded-2xl p-5 border border-[#E5E7EB] space-y-3">
+                        <h3 class="text-lg font-black text-[#1F2937]">📞 도움이 필요하신가요?</h3>
+                        <p class="text-base text-[#6B7280] leading-relaxed">
+                            앱 사용이 어렵거나 불편한 점이 있다면 상담원에게 바로 전화해 주세요.
+                        </p>
+                        <button onclick="showToast('📞 마실수다 시니어 전담 고객센터(1588-0000)로 전화 연결합니다.')" class="w-full py-4 rounded-2xl bg-[#6D4C3D] hover:bg-[#583D31] text-white font-black text-lg">
+                            전화 고객센터 연결 (1588-0000)
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function toggleRomanceSetting() {
+            state.romanceAllowed = !state.romanceAllowed;
+            showToast(state.romanceAllowed ? '💕 설레는 인연 찾기가 켜졌습니다.' : '🤝 편한 친구만 찾도록 변경되었습니다.');
+            renderCurrentTab();
+        }
+
+        // ==================== 모달 / 서브페이지 닫기 ====================
+        function closeModal() {
+            document.getElementById('modal-overlay').classList.add('hidden');
+        }
+
+        function closeSubpage() {
+            document.getElementById('subpage-container').classList.add('hidden');
+        }
+
+        // 초기 실행
+        window.onload = function () {
+            switchTab('home');
+            updateChatBadge();
+        };
+    </script>
+</body>
+</html>
