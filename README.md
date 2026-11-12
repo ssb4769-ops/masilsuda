@@ -11,7 +11,11 @@
 
 ## 실행 방법
 
-빌드 과정 없이 `index.html` 파일 하나로 동작합니다. 브라우저로 열면 됩니다.
+https://ssb4769-ops.github.io/masilsuda/ 를 휴대폰으로 열면 됩니다.
+**내 정보 → 홈 화면에 추가하기**를 누르면 앱처럼 설치할 수 있습니다 (PWA).
+
+- `manifest.webmanifest`, `icons/`: 앱 이름과 아이콘
+- `sw.js`: 화면 파일 저장(빠른 실행). `index.html`을 바꾸면 `sw.js`의 `CACHE` 버전을 올려 주세요.
 (Tailwind CSS, Google Fonts, Unsplash 이미지를 인터넷에서 불러옵니다.)
 
 ## Supabase 연결 (선택)
