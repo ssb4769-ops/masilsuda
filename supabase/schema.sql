@@ -33,6 +33,11 @@ create table if not exists public.chat_messages (
 
 create index if not exists chat_messages_room_idx on public.chat_messages (room_id, id);
 
+-- Data API(anon) 역할에 필요한 권한만 직접 부여합니다.
+-- ("Automatically expose new tables"를 꺼 둔 프로젝트에서도 동작하도록)
+grant select, insert, update on public.masils        to anon;
+grant select, insert         on public.chat_messages to anon;
+
 alter table public.masils        enable row level security;
 alter table public.chat_messages enable row level security;
 
