@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>마실수다 (MASILSUDA) - 시니어 소셜 플랫폼 프로토타입</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
         /* 90% 화이트 & 라이트 그레이 바탕 + 10% 핵심 버튼 포인트 플랫 UI */
@@ -110,6 +111,15 @@
     </div>
 
     <script>
+        // ==================== Supabase 연결 설정 ====================
+        // Supabase 대시보드 > Project Settings > API 의 Project URL 과 anon(public) 키를 넣으세요.
+        // 비워 두면 서버 없이 아래 예시 데이터로만 동작합니다.
+        const SUPABASE_URL = '';
+        const SUPABASE_ANON_KEY = '';
+        const db = (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase)
+            ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+            : null;
+
         // ==================== 검증된 한국인·동양인 시니어 인물 사진 및 일상 풍경 에셋 ====================
         const PHOTO_ASSETS = {
             me: 'https://images.unsplash.com/photo-1584999734482-0361aecad844?auto=format&fit=crop&w=400&q=80',
@@ -416,6 +426,97 @@
                 ]
             }
         ];
+
+        // ==================== Supabase 데이터 연동 ====================
+        function masilToRow(m) {
+            return {
+                category: m.category, date_badge: m.dateBadge, full_date: m.fullDate,
+                max_spots: m.maxSpots, current_spots: m.currentSpots, photo: m.photo,
+                title: m.title, location: m.location, map_hint: m.mapHint, cost: m.cost,
+                target_desc: m.targetDesc, host_name: m.hostName, host_photo: m.hostPhoto,
+                description: m.description, participants: m.participants
+            };
+        }
+
+        function rowToMasil(r) {
+            const participants = r.participants || [];
+            return {
+                id: r.id, category: r.category, dateBadge: r.date_badge, fullDate: r.full_date,
+                maxSpots: r.max_spots, currentSpots: r.current_spots, photo: r.photo || PHOTO_ASSETS.tea1,
+                title: r.title, location: r.location, mapHint: r.map_hint || '', cost: r.cost || '',
+                targetDesc: r.target_desc || '', hostName: r.host_name, hostPhoto: r.host_photo || PHOTO_ASSETS.me,
+                description: r.description || '', participants,
+                joined: participants.some(p => p.name.includes('(나)'))
+            };
+        }
+
+        function rowToMessage(r) {
+            const time = new Date(r.created_at).toLocaleTimeString('ko-KR', { hour: 'numeric', minute: '2-digit' });
+            return { sender: r.sender, photo: r.photo, text: r.text, time, isMe: r.is_me };
+        }
+
+        function makeMasilRoom(m) {
+            return {
+                id: `chat-masil-${m.id}`,
+                type: 'group',
+                badgeLabel: m.dateBadge,
+                relationType: null,
+                title: m.title,
+                memberCount: m.currentSpots,
+                lastMsg: '함께하는 마실 수다방입니다.',
+                time: '',
+                unread: 0,
+                confirmed: true,
+                schedule: { date: m.fullDate, place: m.location, mapDetail: m.mapHint },
+                messages: [
+                    { sender: m.hostName + ' (마실장)', photo: m.hostPhoto, text: '환영합니다! 함께하게 되어 반갑습니다.', time: '', isMe: false }
+                ]
+            };
+        }
+
+        // 서버에서 마실 목록을 불러옵니다. 비어 있으면 예시 마실을 한 번 넣어 둡니다.
+        async function loadFromDb() {
+            if (!db) return;
+            try {
+                let { data, error } = await db.from('masils').select('*').order('id', { ascending: false });
+                if (error) throw error;
+                if (data.length === 0) {
+                    const seeded = await db.from('masils').insert(masils.slice().reverse().map(masilToRow)).select();
+                    if (seeded.error) throw seeded.error;
+                    data = seeded.data.slice().reverse();
+                }
+                masils = data.map(rowToMasil);
+                masils.filter(m => m.joined).forEach(m => {
+                    if (!chatRooms.find(c => c.id === `chat-masil-${m.id}`)) chatRooms.push(makeMasilRoom(m));
+                });
+                if (state.currentTab === 'home' || state.currentTab === 'chat') renderCurrentTab();
+                updateChatBadge();
+            } catch (e) {
+                console.error(e);
+                showToast('서버에 연결하지 못해 예시 데이터로 보여드립니다.');
+            }
+        }
+
+        function saveMessage(roomId, msg) {
+            if (!db) return;
+            db.from('chat_messages')
+                .insert({ room_id: roomId, sender: msg.sender, photo: msg.photo, text: msg.text, is_me: msg.isMe })
+                .then(({ error }) => { if (error) { console.error(error); showToast('수다 저장에 실패했습니다.'); } });
+        }
+
+        // 수다방을 처음 열 때 서버에 저장된 메시지를 이어 붙입니다.
+        async function loadRoomMessages(room) {
+            if (!db || room.dbLoaded) return;
+            room.dbLoaded = true;
+            const { data, error } = await db.from('chat_messages').select('*').eq('room_id', room.id).order('id');
+            if (error) { console.error(error); return; }
+            if (data.length === 0) return;
+            room.messages = room.messages.concat(data.map(rowToMessage));
+            room.lastMsg = data[data.length - 1].text;
+            if (state.activeChatId === room.id && !document.getElementById('subpage-container').classList.contains('hidden')) {
+                renderChatRoomContent(room);
+            }
+        }
 
         // ==================== 공통 유틸리티 함수 ====================
         function showToast(msg) {
@@ -871,6 +972,11 @@
                 photo: PHOTO_ASSETS.me
             });
 
+            if (db) {
+                db.from('masils').update({ current_spots: m.currentSpots, participants: m.participants }).eq('id', m.id)
+                    .then(({ error }) => { if (error) { console.error(error); showToast('참여 정보 저장에 실패했습니다.'); } });
+            }
+
             const newChatId = `chat-masil-${m.id}`;
             chatRooms.unshift({
                 id: newChatId,
@@ -960,7 +1066,7 @@
             `;
         }
 
-        function submitNewMasil(e) {
+        async function submitNewMasil(e) {
             e.preventDefault();
             const cat = document.getElementById('new-category').value;
             const title = document.getElementById('new-title').value;
@@ -968,9 +1074,8 @@
             const loc = document.getElementById('new-location').value;
             const maxSpots = parseInt(document.getElementById('new-max').value, 10);
 
-            const newId = Date.now();
-            masils.unshift({
-                id: newId,
+            const newMasil = {
+                id: Date.now(),
                 category: cat,
                 dateBadge: dateStr,
                 fullDate: dateStr,
@@ -989,7 +1094,19 @@
                     { name: '최순자 (나)', isHost: true, age: '66세 · 여성', tag: '#마실장', photo: PHOTO_ASSETS.me }
                 ],
                 joined: true
-            });
+            };
+
+            if (db) {
+                const { data, error } = await db.from('masils').insert(masilToRow(newMasil)).select().single();
+                if (error) {
+                    console.error(error);
+                    showToast('마실을 서버에 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.');
+                    return;
+                }
+                newMasil.id = data.id;
+            }
+            const newId = newMasil.id;
+            masils.unshift(newMasil);
 
             chatRooms.unshift({
                 id: `chat-masil-${newId}`,
@@ -1241,14 +1358,15 @@
         function sendGreeting(name, photoUrl, age, dong, relationType, message) {
             closeModal();
             let targetChatId = '';
+            const greetingMsg = { sender: '나', photo: PHOTO_ASSETS.me, text: message, time: '방금 전', isMe: true };
             const existing = chatRooms.find(c => c.type === 'direct' && c.title.includes(name));
             if (existing) {
-                existing.messages.push({ sender: '나', photo: PHOTO_ASSETS.me, text: message, time: '방금 전', isMe: true });
+                existing.messages.push(greetingMsg);
                 existing.lastMsg = message;
                 existing.time = '방금 전';
                 targetChatId = existing.id;
             } else {
-                targetChatId = `chat-direct-${Date.now()}`;
+                targetChatId = `chat-direct-${name}`;
                 chatRooms.unshift({
                     id: targetChatId,
                     type: 'direct',
@@ -1261,11 +1379,10 @@
                     unread: 0,
                     confirmed: true,
                     schedule: null,
-                    messages: [
-                        { sender: '나', photo: PHOTO_ASSETS.me, text: message, time: '방금 전', isMe: true }
-                    ]
+                    messages: [greetingMsg]
                 });
             }
+            saveMessage(targetChatId, greetingMsg);
             state.chatFilter = 'direct';
             showToast(`💌 ${name}님께 인사를 보냈습니다! [이웃과 수다]로 이동합니다.`);
             switchTab('chat');
@@ -1366,6 +1483,7 @@
             const subpage = document.getElementById('subpage-container');
             subpage.classList.remove('hidden');
             renderChatRoomContent(room);
+            loadRoomMessages(room);
         }
 
         function renderChatRoomContent(room) {
@@ -1476,13 +1594,15 @@
                 return;
             }
             room.confirmed = true;
-            room.messages.push({
+            const confirmMsg = {
                 sender: '나',
                 photo: PHOTO_ASSETS.me,
                 text: '✋ 마실 참석 확정합니다! 반갑게 뵙겠습니다.',
                 time: '방금 전',
                 isMe: true
-            });
+            };
+            room.messages.push(confirmMsg);
+            saveMessage(room.id, confirmMsg);
             showToast('✓ 참석이 확정되어 참여자분들께 알렸습니다.');
             renderChatRoomContent(room);
         }
@@ -1526,13 +1646,15 @@
             const room = chatRooms.find(r => r.id === state.activeChatId);
             if (!room) return;
 
-            room.messages.push({
+            const newMsg = {
                 sender: '나',
                 photo: PHOTO_ASSETS.me,
                 text: text,
                 time: '방금 전',
                 isMe: true
-            });
+            };
+            room.messages.push(newMsg);
+            saveMessage(room.id, newMsg);
             room.lastMsg = text;
             room.time = '방금 전';
 
@@ -1640,6 +1762,7 @@
         window.onload = function () {
             switchTab('home');
             updateChatBadge();
+            loadFromDb();
         };
     </script>
 </body>
